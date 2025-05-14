@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced FASTA Concatenator</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+        }
+        
+        .container {
+            border: 1px solid #ddd;
+            padding: 25px;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1, h2, h3 {
+            color: var(--primary-color);
+        }
+        
+        h1 {
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 300px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+        }
+        
+        button {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-1px);
+        }
+        
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        button.danger {
+            background-color: var(--danger-color);
+        }
+        
+        button.success {
+            background-color: var(--success-color);
+        }
+        
+        .file-input {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: var(--light-color);
+            border-radius: 6px;
+        }
+        
+        .output-section {
+            margin-top: 25px;
+            padding: 15px;
+            background-color: var(--light-color);
+            border-radius: 6px;
+        }
+        
+        .instructions {
+            background-color: #e8f4f8;
+            border-left: 6px solid var(--secondary-color);
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .progress-container {
+            width: 100%;
+            background-color: #f1f1f1;
+            margin: 15px 0;
+            border-radius: 4px;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .progress-bar {
+            width: 0%;
+            height: 30px;
+            background-color: var(--success-color);
+            text-align: center;
+            line-height: 30px;
+            color: white;
+            font-weight: bold;
+            transition: width 0.3s ease;
+        }
+        
+        .stats {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        
+        .gene-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 10px;
+            background-color: white;
+            border-radius: 4px;
+        }
+        
+        .warning {
+            color: var(--warning-color);
+            font-weight: bold;
+        }
+        
+        .error {
+            color: var(--danger-color);
+            font-weight: bold;
+        }
+        
+        .success-text {
+            color: var(--success-color);
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        
+        .file-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .settings-panel {
+            margin: 15px 0;
+            padding: 15px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .settings-row {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+        }
+        
+        .settings-row label {
+            margin-right: 10px;
+            min-width: 200px;
+        }
+        
+        select, input[type="text"] {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            flex-grow: 1;
+        }
+        
+        input.invalid {
+            border-color: var(--danger-color);
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            margin-left: 5px;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 250px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -125px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .settings-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .settings-row label {
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Advanced FASTA Concatenator</h1>
+        
+        <div class="instructions">
+            <h3>Instructions:</h3>
+            <ol>
+                <li>Upload multiple FASTA files (one gene per file, multiple species in each file)</li>
+                <li>Configure processing options below</li>
+                <li>Species names are extracted from headers (multiple formats supported)</li>
+                <li>Output in PHYLIP or FASTA format for phylogenetic analysis</li>
+                <li>Handles missing data with gaps or custom missing data symbols</li>
+            </ol>
+            <p class="warning">Note: Ensure sequences for each gene are aligned (same length). Multi-line FASTA sequences are supported, but verify formatting to avoid length mismatches. Files larger than 5MB may cause performance issues.</p>
+        </div>
+
+        <div class="settings-panel">
+            <h3>Processing Options</h3>
+            
+            <div class="settings-row">
+                <label for="outputFormat">Output Format:
+                    <span class="tooltip">?
+                        <span class="tooltiptext">PHYLIP for most phylogenetic software, FASTA for compatibility</span>
+                    </span>
+                </label>
+                <select id="outputFormat">
+                    <option value="phylip">PHYLIP</option>
+                    <option value="fasta">FASTA</option>
+                </select>
+            </div>
+            
+            <div class="settings-row">
+                <label for="missingData">Missing Data Symbol:
+                    <span class="tooltip">?
+                        <span class="tooltiptext">Character to use when a species is missing a gene</span>
+                    </span>
+                </label>
+                <input type="text" id="missingData" value="-" maxlength="1" size="1">
+            </div>
+            
+            <div class="settings-row">
+                <label for="headerFormat">Header Parsing Mode:
+                    <span class="tooltip">?
+                        <span class="tooltiptext">How to extract species names from FASTA headers</span>
+                    </span>
+                </label>
+                <select id="headerFormat">
+                    <option value="auto">Auto-detect (recommended)</option>
+                    <option value="underscore">After first underscore</option>
+                    <option value="secondword">Second word</option>
+                    <option value="firsttwowords">First two words</option>
+                    <option value="custom">Custom regex</option>
+                </select>
+            </div>
+            
+            <div class="settings-row" id="customRegexRow" style="display: none;">
+                <label for="customRegex">Custom Regex Pattern:
+                    <span class="tooltip">?
+                        <span class="tooltiptext">JavaScript regex pattern with a capture group for the species name</span>
+                    </span>
+                </label>
+                <input type="text" id="customRegex" placeholder="Example: >\w+\|([^_]+)_([^_]+)" value="">
+            </div>
+            
+            <div class="settings-row">
+                <label for="geneOrder">Gene Order:
+                    <span class="tooltip">?
+                        <span class="tooltiptext">How to order genes in concatenated output</span>
+                    </span>
+                </label>
+                <select id="geneOrder">
+                    <option value="filename">By filename (alphabetical)</option>
+                    <option value="upload">By upload order</option>
+                    <option value="length">By sequence length</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="file-input">
+            <h3>Upload FASTA Files</h3>
+            <div class="file-info">
+                <div>
+                    <input type="file" id="fastaFiles" multiple accept=".fasta,.fa,.fas,.fna,.ffn,.faa,.frn,.txt">
+                    <span class="tooltip">?
+                        <span class="tooltiptext">Select multiple FASTA files (gene alignments)</span>
+                    </span>
+                </div>
+                <div id="fileCount">0 files selected</div>
+            </div>
+            
+            <div id="geneListContainer" style="display:none;">
+                <h4>Selected Files:</h4>
+                <div class="gene-list" id="geneList"></div>
+                <div id="fileWarnings"></div>
+            </div>
+        </div>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar">0%</div>
+        </div>
+
+        <div class="button-group">
+            <button id="processBtn" class="success">Process Files</button>
+            <button id="resetBtn" class="danger">Reset</button>
+            <button id="exampleBtn">Load Example</button>
+        </div>
+
+        <div class="output-section">
+            <h3>Output</h3>
+            <textarea id="output" readonly placeholder="Output will appear here..."></textarea>
+            
+            <div class="stats" id="stats"></div>
+            
+            <div class="button-group">
+                <button id="downloadPhylipBtn" disabled>Download PHYLIP</button>
+                <button id="downloadFastaBtn" disabled>Download FASTA</button>
+                <button id="copyBtn" disabled>Copy to Clipboard</button>
+                <button id="viewStatsBtn">View Detailed Statistics</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced FASTA Concatenator Application
+        class FastaConcatenator {
+            constructor() {
+                // Configuration
+                this.config = {
+                    maxFiles: 200,
+                    maxFileSize: 5 * 1024 * 1024, // 5MB
+                    defaultMissingData: '-',
+                    phylipNameLength: 50,
+                    exampleData: {
+                        "gene1.fa": ">seq1_Genus species1\nACGT\n>seq2_Genus species2\nTGCA",
+                        "gene2.fa": ">seq1_Genus species1\nGCTA\n>seq2_Genus species3\nATCG"
+                    }
+                };
+                
+                // State
+                this.state = {
+                    files: [],
+                    geneData: {},
+                    species: new Set(),
+                    geneNames: [],
+                    geneLengths: {},
+                    warnings: [],
+                    errors: [],
+                    concatenated: null
+                };
+                
+                // DOM Elements
+                this.elements = {
+                    fastaFilesInput: document.getElementById('fastaFiles'),
+                    processBtn: document.getElementById('processBtn'),
+                    resetBtn: document.getElementById('resetBtn'),
+                    downloadPhylipBtn: document.getElementById('downloadPhylipBtn'),
+                    downloadFastaBtn: document.getElementById('downloadFastaBtn'),
+                    copyBtn: document.getElementById('copyBtn'),
+                    viewStatsBtn: document.getElementById('viewStatsBtn'),
+                    exampleBtn: document.getElementById('exampleBtn'),
+                    outputTextarea: document.getElementById('output'),
+                    progressContainer: document.getElementById('progressContainer'),
+                    progressBar: document.getElementById('progressBar'),
+                    statsDiv: document.getElementById('stats'),
+                    fileCountDiv: document.getElementById('fileCount'),
+                    geneListContainer: document.getElementById('geneListContainer'),
+                    geneListDiv: document.getElementById('geneList'),
+                    fileWarningsDiv: document.getElementById('fileWarnings'),
+                    outputFormat: document.getElementById('outputFormat'),
+                    missingData: document.getElementById('missingData'),
+                    headerFormat: document.getElementById('headerFormat'),
+                    customRegex: document.getElementById('customRegex'),
+                    customRegexRow: document.getElementById('customRegexRow'),
+                    geneOrder: document.getElementById('geneOrder')
+                };
+                
+                // Timeout tracking
+                this.timeouts = [];
+                
+                // Initialize
+                this.init();
+            }
+            
+            init() {
+                try {
+                    console.log('Initializing FastaConcatenator');
+                    // Event listeners
+                    this.elements.fastaFilesInput.addEventListener('change', () => {
+                        console.log('File selection changed');
+                        this.updateFileSelection();
+                    });
+                    this.elements.processBtn.addEventListener('click', () => {
+                        console.log('Process button clicked');
+                        this.processFiles();
+                    });
+                    this.elements.resetBtn.addEventListener('click', () => {
+                        console.log('Reset button clicked');
+                        this.resetApp();
+                    });
+                    this.elements.downloadPhylipBtn.addEventListener('click', () => {
+                        console.log('Download PHYLIP clicked');
+                        this.downloadFile('phylip');
+                    });
+                    this.elements.downloadFastaBtn.addEventListener('click', () => {
+                        console.log('Download FASTA clicked');
+                        this.downloadFile('fasta');
+                    });
+                    this.elements.copyBtn.addEventListener('click', () => {
+                        console.log('Copy to clipboard clicked');
+                        this.copyToClipboard();
+                    });
+                    this.elements.viewStatsBtn.addEventListener('click', () => {
+                        console.log('View stats clicked');
+                        this.showDetailedStatistics();
+                    });
+                    this.elements.exampleBtn.addEventListener('click', () => {
+                        console.log('Load example clicked');
+                        this.loadExample();
+                    });
+                    this.elements.headerFormat.addEventListener('change', () => {
+                        console.log('Header format changed');
+                        this.toggleCustomRegex();
+                    });
+                    this.elements.customRegex.addEventListener('input', () => {
+                        console.log('Custom regex input changed');
+                        this.validateCustomRegex();
+                    });
+                    
+                    // Initial UI setup
+                    this.toggleCustomRegex();
+                    this.updateUI();
+                } catch (error) {
+                    console.error('Initialization error:', error);
+                    this.showError(`Initialization failed: ${error.message}`);
+                }
+            }
+            
+            validateCustomRegex() {
+                try {
+                    const regexValue = this.elements.customRegex.value;
+                    if (regexValue) {
+                        new RegExp(regexValue);
+                        this.elements.customRegex.classList.remove('invalid');
+                    } else {
+                        this.elements.customRegex.classList.add('invalid');
+                        this.state.warnings.push('Custom regex cannot be empty');
+                    }
+                    this.updateUI();
+                } catch (e) {
+                    this.elements.customRegex.classList.add('invalid');
+                    this.state.warnings.push(`Invalid regex pattern: ${e.message}`);
+                    this.elements.fileWarningsDiv.innerHTML = `<div class="warning">${this.state.warnings.join('<br>')}</div>`;
+                    this.state.warnings = [];
+                    this.updateUI();
+                }
+            }
+            
+            async processFiles() {
+                try {
+                    console.log('Starting file processing');
+                    this.resetProcessingState();
+                    
+                    if (this.state.files.length === 0) {
+                        this.showError('Please select at least one FASTA file');
+                        return;
+                    }
+                    
+                    this.showProgress(0, 'Preparing files...');
+                    
+                    const options = this.getProcessingOptions();
+                    await this.processAllFiles(options);
+                    this.concatenateSequences(options.missingData);
+                    this.generateOutput(options.outputFormat);
+                    this.showSummaryStatistics();
+                    this.updateUI();
+                    
+                } catch (error) {
+                    console.error('Processing error:', error);
+                    this.showError(`Processing failed: ${error.message}`);
+                } finally {
+                    this.showProgress(100, 'Done!');
+                    this.timeouts.push(setTimeout(() => this.hideProgress(), 1000));
+                }
+            }
+            
+            async processAllFiles(options) {
+                try {
+                    const filesToProcess = this.getFilesToProcess();
+                    const totalFiles = filesToProcess.length;
+                    
+                    for (let i = 0; i < totalFiles; i++) {
+                        const file = filesToProcess[i];
+                        const progress = Math.floor(((i + 1) / totalFiles) * 100);
+                        this.showProgress(progress, `Processing ${file.name}...`);
+                        
+                        try {
+                            const content = await this.readFile(file);
+                            this.processFileContent(content, file.name, options);
+                        } catch (error) {
+                            this.state.warnings.push(`Skipped ${file.name}: ${error.message}`);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error in processAllFiles:', error);
+                    throw error;
+                }
+            }
+            
+            processFileContent(content, fileName, options) {
+                try {
+                    if (!content.includes('>')) {
+                        throw new Error('File does not appear to be in FASTA format');
+                    }
+                    
+                    const geneName = fileName.replace(/\.[^/.]+$/, "");
+                    const { sequences, geneLen, parsingWarnings } = this.parseFasta(content, geneName, options.headerParsing);
+                    
+                    this.state.geneNames.push(geneName);
+                    this.state.geneData[geneName] = sequences;
+                    this.state.geneLengths[geneName] = geneLen;
+                    
+                    if (parsingWarnings.length > 0) {
+                        this.state.warnings.push(...parsingWarnings.map(w => `${fileName}: ${w}`));
+                    }
+                } catch (error) {
+                    console.error(`Error processing ${fileName}:`, error);
+                    throw error;
+                }
+            }
+            
+            parseFasta(text, geneName, headerParsingOptions) {
+                try {
+                    console.log(`Parsing FASTA for ${geneName}`);
+                    if (!text.trim()) {
+                        throw new Error('FASTA file is empty');
+                    }
+                    if (!text.trim().startsWith('>')) {
+                        throw new Error('FASTA file must begin with ">"');
+                    }
+                    
+                    const sequences = {};
+                    const lines = text.split('\n');
+                    console.log(`Parsing FASTA for ${geneName}, lines: ${lines.length}`);
+                    let currentHeader = '';
+                    let currentSpecies = '';
+                    let geneLength = 0;
+                    let currentSequence = '';
+                    const parsingWarnings = [];
+                    
+                    for (const line of lines) {
+                        if (!line.trim() || line.startsWith(';')) {
+                            console.log(`Skipping line: ${line}`);
+                            continue;
+                        }
+                        
+                        if (line.startsWith('>')) {
+                            if (currentHeader && currentSequence) {
+                                sequences[currentHeader] = currentSequence;
+                                if (geneLength === 0) {
+                                    geneLength = currentSequence.length;
+                                }
+                            }
+                            
+                            currentSpecies = this.extractSpeciesName(line, headerParsingOptions);
+                            
+                            if (!currentSpecies) {
+                                parsingWarnings.push(`Could not parse species name from header: ${line}`);
+                                currentHeader = '';
+                                currentSequence = '';
+                                continue;
+                            }
+                            
+                            this.state.species.add(currentSpecies);
+                            currentHeader = currentSpecies;
+                            currentSequence = '';
+                        } else if (currentHeader) {
+                            const cleanLine = line.trim().toUpperCase();
+                            if (cleanLine) {
+                                currentSequence += cleanLine;
+                            }
+                        }
+                    }
+                    
+                    if (currentHeader && currentSequence) {
+                        sequences[currentHeader] = currentSequence;
+                        if (geneLength === 0) {
+                            geneLength = currentSequence.length;
+                        }
+                    }
+                    
+                    for (const species in sequences) {
+                        if (sequences[species].length !== geneLength && geneLength > 0) {
+                            parsingWarnings.push(`Sequence length mismatch for ${species} in ${geneName}: expected ${geneLength}, got ${sequences[species].length}. Check for alignment issues or multi-line formatting errors.`);
+                        }
+                        if (sequences[species].length === 60 && geneLength === 60) {
+                            parsingWarnings.push(`Sequence for ${species} in ${geneName} is unexpectedly short (60 bp). Verify multi-line FASTA formatting.`);
+                        }
+                    }
+                    
+                    return { sequences, geneLen: geneLength, parsingWarnings };
+                } catch (error) {
+                    console.error(`Error parsing FASTA in ${geneName}:`, error);
+                    throw error;
+                }
+            }
+            
+            extractSpeciesName(header, options) {
+                try {
+                    console.log(`Extracting species name from header: ${header}`);
+                    const headerText = header.substring(1).trim();
+                    if (!headerText) {
+                        console.warn('Empty header encountered');
+                        return null;
+                    }
+                    
+                    if (options.mode === 'custom' && options.customRegex) {
+                        try {
+                            const regex = new RegExp(options.customRegex);
+                            const match = headerText.match(regex);
+                            if (match && match[1]) {
+                                return match[1].trim();
+                            }
+                            console.warn(`Custom regex failed for header: ${headerText}`);
+                        } catch (e) {
+                            console.error('Invalid custom regex:', e);
+                            this.state.warnings.push(`Invalid custom regex pattern: ${e.message}`);
+                            return null;
+                        }
+                    }
+                    
+                    switch (options.mode) {
+                        case 'auto':
+                            return this.autoDetectSpeciesName(headerText);
+                        case 'underscore':
+                            const parts = headerText.split('_');
+                            return parts.length > 1 ? parts[1].trim().split(/\s+/).slice(0, 2).join(' ') : null;
+                        case 'secondword':
+                            return headerText.split(/\s+/)[1] || null;
+                        case 'firsttwowords':
+                            const words = headerText.split(/\s+/);
+                            return words.length >= 2 ? `${words[0]} ${words[1]}` : null;
+                        default:
+                            return headerText.split(/\s+/).slice(0, 2).join(' ');
+                    }
+                } catch (error) {
+                    console.error('Error extracting species name:', error);
+                    return null;
+                }
+            }
+            
+            autoDetectSpeciesName(headerText) {
+                try {
+                    console.log(`Auto-detecting species name: ${headerText}`);
+                    const patterns = [
+                        /([A-Z][a-z]+\s[A-Za-z]+)$/,
+                        /_\s*([A-Z][a-z]+\s[A-Za-z]+)/,
+                        /^([A-Z][a-z]+\s[A-Za-z]+)/
+                    ];
+                    
+                    for (const pattern of patterns) {
+                        const match = headerText.match(pattern);
+                        if (match && match[1]) {
+                            return match[1].trim();
+                        }
+                    }
+                    
+                    const words = headerText.split(/\s+/);
+                    return words.length >= 2 ? `${words[0]} ${words[1]}` : null;
+                } catch (error) {
+                    console.error('Error in autoDetectSpeciesName:', error);
+                    return null;
+                }
+            }
+            
+            concatenateSequences(missingDataSymbol) {
+                try {
+                    console.log('Concatenating sequences');
+                    const concatenated = {};
+                    const speciesList = Array.from(this.state.species);
+                    
+                    const orderedGeneNames = this.orderGeneNames(this.state.geneNames);
+                    
+                    for (const species of speciesList) {
+                        concatenated[species] = [];
+                    }
+                    
+                    for (const geneName of orderedGeneNames) {
+                        const geneLen = this.state.geneLengths[geneName] || 0;
+                        const geneSequences = this.state.geneData[geneName] || {};
+                        
+                        for (const species of speciesList) {
+                            if (geneSequences[species]) {
+                                concatenated[species].push(geneSequences[species]);
+                            } else {
+                                concatenated[species].push(missingDataSymbol.repeat(geneLen));
+                            }
+                        }
+                    }
+                    
+                    const result = {};
+                    for (const species in concatenated) {
+                        result[species] = concatenated[species].join('');
+                    }
+                    
+                    this.state.concatenated = result;
+                } catch (error) {
+                    console.error('Error in concatenateSequences:', error);
+                    throw error;
+                }
+            }
+            
+            orderGeneNames(geneNames) {
+                try {
+                    const orderBy = this.elements.geneOrder.value;
+                    
+                    switch (orderBy) {
+                        case 'upload':
+                            return [...geneNames];
+                        case 'length':
+                            return [...geneNames].sort((a, b) => {
+                                return (this.state.geneLengths[b] || 0) - (this.state.geneLengths[a] || 0);
+                            });
+                        case 'filename':
+                        default:
+                            return [...geneNames].sort();
+                    }
+                } catch (error) {
+                    console.error('Error in orderGeneNames:', error);
+                    throw error;
+                }
+            }
+            
+            generateOutput(format) {
+                try {
+                    console.log(`Generating output in ${format} format`);
+                    if (!this.state.concatenated || Object.keys(this.state.concatenated).length === 0) {
+                        this.elements.outputTextarea.value = "No valid sequences found.";
+                        return;
+                    }
+                    
+                    if (format === 'phylip') {
+                        this.elements.outputTextarea.value = this.convertToPhylip(this.state.concatenated);
+                    } else {
+                        this.elements.outputTextarea.value = this.convertToFasta(this.state.concatenated);
+                    }
+                } catch (error) {
+                    console.error('Error in generateOutput:', error);
+                    throw error;
+                }
+            }
+            
+            convertToPhylip(sequences) {
+                try {
+                    const species = Object.keys(sequences);
+                    
+                    const seqLength = sequences[species[0]].length;
+                    for (const s of species) {
+                        if (sequences[s].length !== seqLength) {
+                            this.state.warnings.push(`Sequence length mismatch for ${s}. Expected ${seqLength}, got ${sequences[s].length}`);
+                        }
+                    }
+                    
+                    const maxNameLength = Math.min(
+                        Math.max(...species.map(s => this.getPhylipName(s).length)), 
+                        this.config.phylipNameLength
+                    );
+                    
+                    let output = `${species.length} ${seqLength}\n`;
+                    
+                    species.forEach((s, index) => {
+                        const phylipName = this.getPhylipName(s, index);
+                        const paddedName = phylipName.padEnd(maxNameLength);
+                        output += `${paddedName} ${sequences[s]}\n`;
+                    });
+                    
+                    return output;
+                } catch (error) {
+                    console.error('Error in convertToPhylip:', error);
+                    throw error;
+                }
+            }
+            
+            getPhylipName(fullName, index = 0) {
+                try {
+                    const maxLength = this.config.phylipNameLength;
+                    let shortName = fullName.replace(/\s+/g, '_');
+                    
+                    if (shortName.length > maxLength) {
+                        shortName = shortName.substring(0, maxLength - 3) + '...';
+                    }
+                    
+                    if (index > 0) {
+                        const suffix = `_${index}`;
+                        if (shortName.length + suffix.length <= maxLength) {
+                            shortName += suffix;
+                        } else {
+                            shortName = shortName.substring(0, maxLength - suffix.length) + suffix;
+                        }
+                    }
+                    
+                    return shortName;
+                } catch (error) {
+                    console.error('Error in getPhylipName:', error);
+                    throw error;
+                }
+            }
+            
+            convertToFasta(sequences) {
+                try {
+                    let output = '';
+                    for (const species in sequences) {
+                        output += `>${species}\n${sequences[species]}\n`;
+                    }
+                    return output;
+                } catch (error) {
+                    console.error('Error in convertToFasta:', error);
+                    throw error;
+                }
+            }
+            
+            updateFileSelection() {
+                try {
+                    console.log('Updating file selection');
+                    this.state.files = Array.from(this.elements.fastaFilesInput.files);
+                    this.elements.fileCountDiv.textContent = `${this.state.files.length} files selected`;
+                    
+                    if (this.state.files.length > this.config.maxFiles) {
+                        this.state.warnings.push(`Maximum ${this.config.maxFiles} files allowed. Only the first ${this.config.maxFiles} will be processed.`);
+                        this.state.files = this.state.files.slice(0, this.config.maxFiles);
+                    }
+                    
+                    const oversizedFiles = this.state.files.filter(f => f.size > this.config.maxFileSize);
+                    if (oversizedFiles.length > 0) {
+                        this.state.warnings.push(`Some files exceed ${this.config.maxFileSize/1024/1024}MB and may cause performance issues: ${oversizedFiles.map(f => f.name).join(', ')}`);
+                    }
+                    
+                    if (this.state.files.length > 0) {
+                        this.elements.geneListContainer.style.display = 'block';
+                        this.elements.geneListDiv.innerHTML = '';
+                        
+                        const maxFilesToShow = Math.min(this.state.files.length, 20);
+                        for (let i = 0; i < maxFilesToShow; i++) {
+                            this.elements.geneListDiv.innerHTML += `<div>${this.state.files[i].name} (${Math.round(this.state.files[i].size/1024)} KB)</div>`;
+                        }
+                        
+                        if (this.state.files.length > 20) {
+                            this.elements.geneListDiv.innerHTML += `<div>...and ${this.state.files.length - 20} more</div>`;
+                        }
+                        
+                        if (this.state.warnings.length > 0) {
+                            this.elements.fileWarningsDiv.innerHTML = 
+                                `<div class="warning">${this.state.warnings.join('<br>')}</div>`;
+                            this.state.warnings = [];
+                        }
+                    } else {
+                        this.elements.geneListContainer.style.display = 'none';
+                    }
+                    this.updateUI();
+                } catch (error) {
+                    console.error('Error in updateFileSelection:', error);
+                    throw error;
+                }
+            }
+            
+            showProgress(percent, message = '') {
+                try {
+                    this.elements.progressContainer.style.display = 'block';
+                    this.elements.progressBar.style.width = `${percent}%`;
+                    this.elements.progressBar.textContent = message || `${percent}%`;
+                } catch (error) {
+                    console.error('Error in showProgress:', error);
+                }
+            }
+            
+            hideProgress() {
+                try {
+                    this.elements.progressContainer.style.display = 'none';
+                } catch (error) {
+                    console.error('Error in hideProgress:', error);
+                }
+            }
+            
+            showSummaryStatistics() {
+                try {
+                    console.log('Showing summary statistics');
+                    const speciesCount = this.state.species.size;
+                    const geneCount = this.state.geneNames.length;
+                    const totalLength = this.state.concatenated ? 
+                        Object.values(this.state.concatenated)[0]?.length || 0 : 0;
+                    
+                    let statsHTML = `
+                        <strong>Summary Statistics:</strong><br>
+                        Species: ${speciesCount}<br>
+                        Genes: ${geneCount}<br>
+                        Total alignment length: ${totalLength} bp<br>
+                        Missing data: ${this.getMissingDataStats()}<br>
+                    `;
+                    
+                    if (this.state.warnings.length > 0) {
+                        statsHTML += `<div class="warning"><br>Warnings:<br>${this.state.warnings.slice(0, 5).join('<br>')}`;
+                        if (this.state.warnings.length > 5) {
+                            statsHTML += `<br>...and ${this.state.warnings.length - 5} more (see detailed stats)`;
+                        }
+                        statsHTML += `<br>Check multi-line FASTA formatting or use alignment tools (e.g., MAFFT, Muscle) to resolve length mismatches.</div>`;
+                    }
+                    
+                    this.elements.statsDiv.innerHTML = statsHTML;
+                } catch (error) {
+                    console.error('Error in showSummaryStatistics:', error);
+                    throw error;
+                }
+            }
+            
+            showDetailedStatistics() {
+                try {
+                    console.log('Showing detailed statistics');
+                    if (!this.state.concatenated) {
+                        this.showError('No data to show statistics for');
+                        return;
+                    }
+                    
+                    let statsText = `Detailed Statistics:\n\n`;
+                    
+                    statsText += `Gene Lengths:\n`;
+                    const orderedGeneNames = this.orderGeneNames(this.state.geneNames);
+                    for (const geneName of orderedGeneNames) {
+                        statsText += `- ${geneName}: ${this.state.geneLengths[geneName] || '?'} bp\n`;
+                    }
+                    
+                    statsText += `\nMissing Data by Species:\n`;
+                    const speciesList = Array.from(this.state.species);
+                    const missingDataSymbol = this.elements.missingData.value || this.config.defaultMissingData;
+                    
+                    for (const species of speciesList) {
+                        const missingGenes = orderedGeneNames.filter(gene => 
+                            !this.state.geneData[gene]?.[species]
+                        );
+                        
+                        if (missingGenes.length > 0) {
+                            statsText += `${species}: ${missingGenes.length} missing genes (${missingGenes.join(', ')})\n`;
+                        }
+                    }
+                    
+                    if (this.state.warnings.length > 0) {
+                        statsText += `\nWarnings:\n`;
+                        for (const warning of this.state.warnings) {
+                            statsText += `- ${warning}\n`;
+                        }
+                    }
+                    
+                    alert(statsText);
+                } catch (error) {
+                    console.error('Error in showDetailedStatistics:', error);
+                    this.showError(`Failed to show statistics: ${error.message}`);
+                }
+            }
+            
+            getMissingDataStats() {
+                try {
+                    if (!this.state.concatenated) return 'N/A';
+                    
+                    const speciesList = Array.from(this.state.species);
+                    const missingDataSymbol = this.elements.missingData.value || this.config.defaultMissingData;
+                    let totalMissing = 0;
+                    let totalSites = 0;
+                    
+                    for (const species of speciesList) {
+                        const seq = this.state.concatenated[species];
+                        if (!seq) continue;
+                        
+                        totalSites += seq.length;
+                        totalMissing += (seq.match(new RegExp(missingDataSymbol, 'g')) || []).length;
+                    }
+                    
+                    const percentMissing = totalSites > 0 ? 
+                        Math.round((totalMissing / totalSites) * 100) : 0;
+                    
+                    return `${totalMissing} sites (${percentMissing}%)`;
+                } catch (error) {
+                    console.error('Error in getMissingDataStats:', error);
+                    return 'N/A';
+                }
+            }
+            
+            getProcessingOptions() {
+                try {
+                    return {
+                        outputFormat: this.elements.outputFormat.value,
+                        missingData: this.elements.missingData.value || this.config.defaultMissingData,
+                        headerParsing: {
+                            mode: this.elements.headerFormat.value,
+                            customRegex: this.elements.headerFormat.value === 'custom' ? 
+                                this.elements.customRegex.value : null
+                        }
+                    };
+                } catch (error) {
+                    console.error('Error in getProcessingOptions:', error);
+                    throw error;
+                }
+            }
+            
+            getFilesToProcess() {
+                try {
+                    return this.state.files.slice(0, this.config.maxFiles);
+                } catch (error) {
+                    console.error('Error in getFilesToProcess:', error);
+                    throw error;
+                }
+            }
+            
+            resetProcessingState() {
+                try {
+                    this.state.geneData = {};
+                    this.state.species = new Set();
+                    this.state.geneNames = [];
+                    this.state.geneLengths = {};
+                    this.state.concatenated = null;
+                    this.elements.outputTextarea.value = '';
+                    this.elements.statsDiv.textContent = '';
+                    this.elements.downloadPhylipBtn.disabled = true;
+                    this.elements.downloadFastaBtn.disabled = true;
+                    this.elements.copyBtn.disabled = true;
+                    this.state.warnings = [];
+                    this.state.errors = [];
+                } catch (error) {
+                    console.error('Error in resetProcessingState:', error);
+                    throw error;
+                }
+            }
+            
+            resetApp() {
+                try {
+                    console.log('Resetting application');
+                    this.timeouts.forEach(clearTimeout);
+                    this.timeouts = [];
+                    
+                    this.elements.fastaFilesInput.value = '';
+                    this.resetProcessingState();
+                    this.state.files = [];
+                    this.elements.fileCountDiv.textContent = '0 files selected';
+                    this.elements.geneListContainer.style.display = 'none';
+                    this.elements.fileWarningsDiv.textContent = '';
+                    this.elements.customRegex.classList.remove('invalid');
+                    this.updateUI();
+                } catch (error) {
+                    console.error('Error in resetApp:', error);
+                    throw error;
+                }
+            }
+            
+            updateUI() {
+                try {
+                    this.elements.processBtn.disabled = this.state.files.length === 0 || 
+                        (this.elements.headerFormat.value === 'custom' && this.elements.customRegex.classList.contains('invalid'));
+                    this.toggleCustomRegex();
+                    this.elements.downloadPhylipBtn.disabled = !this.state.concatenated;
+                    this.elements.downloadFastaBtn.disabled = !this.state.concatenated;
+                    this.elements.copyBtn.disabled = !this.elements.outputTextarea.value;
+                } catch (error) {
+                    console.error('Error in updateUI:', error);
+                    throw error;
+                }
+            }
+            
+            toggleCustomRegex() {
+                try {
+                    this.elements.customRegexRow.style.display = 
+                        this.elements.headerFormat.value === 'custom' ? 'flex' : 'none';
+                } catch (error) {
+                    console.error('Error in toggleCustomRegex:', error);
+                }
+            }
+            
+            showError(message) {
+                try {
+                    this.state.errors.push(message);
+                    this.elements.outputTextarea.value = `Error: ${message}`;
+                    this.elements.statsDiv.innerHTML += `<div class="error">${message}</div>`;
+                    console.error(message);
+                } catch (error) {
+                    console.error('Error in showError:', error);
+                }
+            }
+            
+            async readFile(file) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        if (file.size > this.config.maxFileSize) {
+                            reject(new Error(`File too large (${Math.round(file.size/1024/1024)}MB). Maximum size is ${this.config.maxFileSize/1024/1024}MB.`));
+                            return;
+                        }
+                        
+                        const reader = new FileReader();
+                        reader.onload = event => resolve(event.target.result);
+                        reader.onerror = error => reject(new Error('File reading failed'));
+                        reader.readAsText(file);
+                    } catch (error) {
+                        console.error('Error in readFile:', error);
+                        reject(error);
+                    }
+                });
+            }
+            
+            downloadFile(format) {
+                try {
+                    console.log(`Downloading file in ${format} format`);
+                    let content, filename;
+                    
+                    if (format === 'phylip') {
+                        content = this.convertToPhylip(this.state.concatenated);
+                        filename = 'concatenated.phy';
+                    } else {
+                        content = this.convertToFasta(this.state.concatenated);
+                        filename = 'concatenated.fasta';
+                    }
+                    
+                    if (!content) {
+                        this.showError('No content to download');
+                        return;
+                    }
+                    
+                    const blob = new Blob([content], { type: 'text/plain' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } catch (error) {
+                    console.error('Error in downloadFile:', error);
+                    this.showError(`Download failed: ${error.message}`);
+                }
+            }
+            
+            copyToClipboard() {
+                try {
+                    console.log('Copying to clipboard');
+                    navigator.clipboard.writeText(this.elements.outputTextarea.value)
+                        .then(() => {
+                            const originalText = this.elements.copyBtn.textContent;
+                            this.elements.copyBtn.textContent = 'Copied!';
+                            this.timeouts.push(setTimeout(() => {
+                                this.elements.copyBtn.textContent = originalText;
+                            }, 2000));
+                        })
+                        .catch(err => {
+                            console.error('Copy failed:', err);
+                            this.showError('Failed to copy to clipboard. Please copy manually.');
+                        });
+                } catch (error) {
+                    console.error('Error in copyToClipboard:', error);
+                    this.showError(`Copy failed: ${error.message}`);
+                }
+            }
+            
+            async loadExample() {
+                try {
+                    console.log('Loading example data');
+                    this.resetApp();
+                    this.showProgress(0, 'Loading example...');
+                    
+                    for (const [fileName, content] of Object.entries(this.config.exampleData)) {
+                        this.processFileContent(content, fileName, {
+                            headerParsing: { mode: 'auto' }
+                        });
+                    }
+                    
+                    this.concatenateSequences(this.config.defaultMissingData);
+                    this.generateOutput(this.elements.outputFormat.value);
+                    this.showSummaryStatistics();
+                    this.updateUI();
+                    
+                    this.showProgress(100, 'Example loaded!');
+                    this.timeouts.push(setTimeout(() => this.hideProgress(), 1000));
+                } catch (error) {
+                    console.error('Error in loadExample:', error);
+                    this.showError(`Failed to load example: ${error.message}`);
+                }
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                console.log('Initializing FastaConcatenator');
+                const app = new FastaConcatenator();
+            } catch (error) {
+                console.error('Application initialization error:', error);
+                alert(`Application failed to initialize: ${error.message}`);
+            }
+        });
+    </script>
+</body>
+</html>
